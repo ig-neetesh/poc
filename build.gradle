@@ -1,0 +1,108 @@
+/*
+ * Gradle 3.2.1 build script
+ *
+ */
+
+//def releaseVersion = '1.0'
+def releaseVersion = '1.1-SNAPSHOT'
+
+// Apply the java plugin to add support for Java
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'com.github.pernyfelt.sieparser'
+archivesBaseName = "sieparser"
+version = releaseVersion
+
+def defaultEncoding = 'UTF-8'
+
+compileJava {
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+    options.deprecation = true
+    options.compilerArgs << "-Xlint:unchecked"
+    //options.encoding = defaultEncoding
+}
+
+[compileJava, compileTestJava]*.options*.encoding = defaultEncoding
+
+ext {
+    pomFile = file("${project.buildDir}/generated-pom.xml")
+}
+
+repositories {
+    // Use 'jcenter' for resolving dependencies.
+    jcenter()
+}
+
+dependencies {
+    // The production code uses the SLF4J logging API at compile time
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-simple
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.21'
+
+    testCompile 'junit:junit:4.12'
+}
+
+task myJavadocs(type: Javadoc) {
+    classpath = configurations.compile
+    source = sourceSets.main.allJava
+    exclude '**/org/slf4j/**'
+}
+
+task javadocJar(type: Jar, dependsOn: 'myJavadocs') {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourceJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourceJar, javadocJar
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            pom.project {
+                name 'SIEParser'
+                description 'A Java parser for SIE files that can read files of version 1 to 4 (including 4i)'
+                artifactId 'SieParser'
+                url 'http://github.com/perNyfelt/SIEParser'
+                packaging 'jar'
+                licenses {
+                    license {
+                        name 'MIT License'
+                        url 'http://opensource.org/licenses/MIT'
+                    }
+                }
+                inceptionYear 2016
+                organization {
+                    name 'Alipsa HB'
+                    url 'http://www.alipsa.se'
+                }
+                developers {
+                    developer {
+                        id 'perNyfelt'
+                        name 'Per Nyfelt'
+                        // organization 'Alipsa HB'
+                        organizationUrl 'http://www.alipsa.se'
+                    }
+                }
+                issueManagement {
+                    system 'github'
+                    url 'http://github.com/perNyfelt/SIEParser/issues'
+                }
+
+                scm {
+                    url 'http://github.com/perNyfelt/SIEParser'
+                    connection '"scm:git:http://github.com/perNyfelt/SIEParser.git'
+                    developerConnection 'scm:git:git@github.com:perNyfelt/SIEParser.git'
+                }
+            }
+        }
+    }
+}
